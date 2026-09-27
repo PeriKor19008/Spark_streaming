@@ -1,0 +1,13 @@
+# Εξαρτήσεις για τον producer (τρέχει native στον host) και το REST API.
+# Ο Spark consumer τρέχει μέσα στο container ezachar/db_project2026:v0.2 και
+# δεν χρειάζεται τοπική εγκατάσταση PySpark.
+
+uxsim==1.14.2
+kafka-python==3.0.10
+pandas>=2.0
+numpy>=1.24
+
+# Bonus: REST API πάνω από τη MongoDB
+pymongo>=4.6
+fastapi>=0.110
+uvicorn>=0.29

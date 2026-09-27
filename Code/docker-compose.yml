@@ -1,0 +1,84 @@
+services:
+  spark-master:
+    image: ezachar/db_project2026:v0.2
+    entrypoint: []
+    container_name: spark-master
+    command: >
+      /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+      --host spark-master
+    ports:
+      - "7077:7077"
+      - "8080:8080"
+    networks:
+      - dsnet
+
+  spark-worker:
+    image: ezachar/db_project2026:v0.2
+    entrypoint: []
+    container_name: spark-worker
+    command: >
+      /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker
+      spark://spark-master:7077
+    depends_on:
+      - spark-master
+    ports:
+      - "8081:8081"
+    networks:
+      - dsnet
+
+  # Ερώτημα 2+3: η Spark Structured Streaming εφαρμογή.
+  # restart: on-failure -> αν το topic δεν έχει δημιουργηθεί ακόμα, το job
+  # τερματίζει και ξαναπροσπαθεί μέχρι ο Redpanda να είναι έτοιμος.
+  spark-submit-job:
+    image: ezachar/db_project2026:v0.2
+    entrypoint: []
+    container_name: spark-job
+    restart: on-failure
+    volumes:
+      - ./spark_streaming.py:/opt/spark/work-dir/spark_streaming.py
+    command: >
+      /opt/spark/bin/spark-submit
+      --master spark://spark-master:7077
+      --jars /opt/spark/jars/spark-sql-kafka-0-10_2.12-3.5.2.jar,/opt/spark/jars/kafka-clients-3.5.2.jar,/opt/spark/jars/spark-token-provider-kafka-0-10_2.12-3.5.2.jar,/opt/spark/jars/commons-pool2-2.11.1.jar,/opt/spark/jars/mongo-spark-connector_2.12-10.3.0.jar,/opt/spark/jars/mongodb-driver-sync-4.11.1.jar,/opt/spark/jars/mongodb-driver-core-4.11.1.jar,/opt/spark/jars/bson-4.11.1.jar,/opt/spark/jars/mongodb-driver-legacy-4.11.1.jar
+      /opt/spark/work-dir/spark_streaming.py
+    depends_on:
+      - spark-master
+      - mongodb
+      - redpanda
+    networks:
+      - dsnet
+
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v23.3.10
+    container_name: redpanda
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp=1
+      - --memory=1G
+      - --reserve-memory=0M
+      - --node-id=0
+      - --check=false
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr internal://redpanda:9092,external://localhost:19092
+      - --rpc-addr redpanda:33145
+      - --advertise-rpc-addr redpanda:33145
+    ports:
+      - "19092:19092"
+      - "9092:9092"
+      - "9644:9644"
+    networks:
+      - dsnet
+
+  mongodb:
+    image: mongo:6.0
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    networks:
+      - dsnet
+
+networks:
+  dsnet:
+    driver: bridge

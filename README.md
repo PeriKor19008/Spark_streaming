@@ -1,1 +1,2 @@
 # Spark_streaming
+Designed and deployed an end-to-end real-time big data pipeline to process live vehicle positioning data. The architecture leverages Apache Spark Structured Streaming and Redpanda for high-throughput data ingestion and stream processing. Processed data is seamlessly stored in MongoDB and served to client applications via a custom, high-performance RESTful API built with FastAPI. The entire microservices environment was containerized and orchestrated using Docker Compose for reliable and scalable deployment.
